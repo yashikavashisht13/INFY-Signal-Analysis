@@ -1,4 +1,4 @@
-% ── INFY Quantitative Backtesting Engine (Institutional Grade) ───────────────
+% ── INFY QUANTITATIVE BACKTEST ENGINE ───────────────
 % ECE → Finance Project | Yashika Vashisht
 % Upgrades: Look-Ahead Bias Removed, Trade Friction, ADX Regime Filter, OOS Split
 % Fixes: Bulletproof OS & OneDrive Desktop Routing
@@ -117,7 +117,7 @@ plot(dates, equity, 'Color', [0.1 0.6 0.3], 'LineWidth', 1.5); hold on;
 plot(dates, bh_equity, 'Color', [0.9 0.7 0.0], 'LineWidth', 1.5, 'LineStyle', '--');
 xline(split_date, 'r--', 'LineWidth', 1.5, 'Label', 'Out-of-Sample Start', 'LabelHorizontalAlignment', 'left');
 
-title('Institutional Strategy vs Buy & Hold (Regime Gated)');
+title('Regime-Gated Strategy vs Buy & Hold');
 xlabel('Date'); ylabel('Portfolio Value (starting at $1)');
 legend('ADX-Gated MA Strategy', 'Buy & Hold', 'Location', 'northwest');
 grid on; 
@@ -140,13 +140,13 @@ sma50_alt = movmean(prices, 50);
 sma100 = movmean(prices, 100);
 
 % 20/50 strategy
-g_2050 = find(diff(sma20 > sma50_alt) == 1);
-d_2050 = find(diff(sma20 > sma50_alt) == -1);
+g_2050 = find(diff(sma20 > sma50_alt) == 1) + 1;
+d_2050 = find(diff(sma20 > sma50_alt) == -1) + 1;
 [eq_2050, ~] = run_backtest(prices, g_2050, d_2050);
 
 % 100/200 strategy
-g_100200 = find(diff(sma100 > sma200) == 1);
-d_100200 = find(diff(sma100 > sma200) == -1);
+g_100200 = find(diff(sma100 > sma200) == 1) + 1;
+d_100200 = find(diff(sma100 > sma200) == -1) + 1;
 [eq_100200, ~] = run_backtest(prices, g_100200, d_100200);
 
 % Returns for all strategies
@@ -167,13 +167,30 @@ saveas(figure(5), fullfile(desktop, 'INFY_Strategy_Comparison.png'));
 
 %% Step 7: Final Executive Summary & Statistical Calculations
 daily_returns  = diff(equity) ./ equity(1:end-1);
-risk_free_rate = 0.04; 
+risk_free_rate = 0.04;
 daily_rf       = risk_free_rate / 252;
 excess_returns = daily_returns - daily_rf;
-sharpe         = (mean(excess_returns) / std(daily_returns)) * sqrt(252);
+
+if std(daily_returns) > 0
+    sharpe = (mean(excess_returns) / std(daily_returns)) * sqrt(252);
+else
+    sharpe = 0;
+end
+years_elapsed = length(prices) / 252;
+
+cagr = ((equity(end)^(1/years_elapsed)) - 1) * 100;
+
+if abs(max_drawdown) > 0
+    calmar = cagr / abs(max_drawdown);
+else
+    calmar = 0;
+end
+
+total_trades    = length(golden);
+blocked_entries = length(cross_up) - length(golden);
 
 fprintf('\n======================================================\n');
-fprintf('  INFY QUANTITATIVE BACKTEST — V2.0 (INSTITUTIONAL)\n');
+fprintf('  INFY QUANTITATIVE BACKTEST\n');
 fprintf('======================================================\n');
 fprintf('Model Features : ADX Regime Filter, T+1 Execution, Friction\n');
 fprintf('Data Split     : 75%% In-Sample / 25%% Out-of-Sample\n');
@@ -181,10 +198,12 @@ fprintf('------------------------------------------------------\n');
 fprintf('Total Return   : %.2f%%\n', ret_50200);
 fprintf('Buy & Hold     : %.2f%%\n', (bh_equity(end) - 1) * 100);
 fprintf('Sharpe Ratio   : %.2f (Risk-Free: 4%%)\n', sharpe);
+fprintf('CAGR           : %.2f%%\n', cagr);
+fprintf('Calmar Ratio   : %.2f\n', calmar);
 fprintf('Max Drawdown   : %.2f%%\n', max_drawdown);
 fprintf('------------------------------------------------------\n');
-fprintf('Gated Entries  : %d signals accepted by ADX\n', length(golden));
-fprintf('Blocked Entries: %d signals rejected due to chop\n', length(cross_up) - length(golden));
+fprintf('Gated Entries  : %d signals accepted by ADX\n', total_trades);
+fprintf('Blocked Entries: %d signals rejected due to chop\n', blocked_entries);
 fprintf('======================================================\n\n');
 
 %% ========================================================================
@@ -217,3 +236,4 @@ function [equity, capital] = run_backtest(prices, buy_signals, sell_signals)
         end
     end
 end
+dir(fullfile(desktop,'*.png'))
