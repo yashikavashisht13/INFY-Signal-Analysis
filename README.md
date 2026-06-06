@@ -1,42 +1,45 @@
-## Performance & Statistical Results
+# INFY Quantitative Backtesting Engine
+A MATLAB-based framework for evaluating regime-gated trend-following strategies on historical equity data.
 
-### Executive Summary (Institutional Validation)
-The engine evaluates a multi-decade historical backtest on Infosys (INFY) using a **Regime-Gated 50/200-Day Moving Average Crossover Strategy**. Unlike naive backtests, this framework enforces realistic market parameters, including a **10 basis point (0.1%) transaction friction penalty** per trade and a strict **T+1 execution phase shift** to completely eliminate look-ahead bias. 
+## Skills Demonstrated
+* **MATLAB**: Vectorized data analysis, visualization, and time-series signal processing.
+* **Quantitative Finance**: Backtesting methodology, transaction-cost modeling, and risk-adjusted performance analysis.
+* **Financial Research**: Out-of-sample validation, regime-gating, and empirical stress-testing.
 
-Furthermore, to isolate real-world performance, the dataset is evaluated across an **Out-of-Sample (OOS) validation split**, separating historical trend baseline development (75% In-Sample) from blind, live-testing emulation (25% Out-of-Sample).
+## Key Methodological Features
+* **T+1 trade execution** to reduce look-ahead bias.
+* **Transaction-cost modeling** (10 bps per trade).
+* **Out-of-sample validation framework**.
+* **Trend-strength regime gating** using ADX.
+* **Risk-adjusted evaluation** using Sharpe and Calmar ratios.
+* **Drawdown and equity-curve analysis**.
 
-| Quantitative Metric | Evaluation Value | Context & Architectural Significance |
-| :--- | :--- | :--- |
-| **Asset Under Test** | Infosys (INFY) | Primary equity target |
-| **Historical Period** | 2005 – 2026 | Multi-decade macro cycle evaluation |
-| **Data Split Architecture** | 75% In-Sample / 25% OOS | Mathematical protection against data-overfitting |
-| **Execution Modeling** | T+1 Closing Price | Zero look-ahead bias (realistic trade entry/exit) |
-| **Transaction Friction** | 0.10% (10 bps) per trade | Accounts for broker commissions and execution slippage |
-| **Total Strategy Return** | **94.60%** | Cumulative return adjusted for friction and regime gating |
-| **Benchmark Buy & Hold** | **246.32%** | Baseline performance of a long-only passive holding |
-| **Sharpe Ratio** | **0.03** | Risk-adjusted excess return vs. a **4% Risk-Free Rate** baseline |
-| **Maximum Drawdown** | **-45.66%** | Peak-to-trough systemic risk exposure |
-| **Gated Trade Entries** | **19 Signals** | High-conviction alpha signals accepted by the regime filter |
-| **Blocked Trade Entries** | **15 Signals** | **False signals rejected by the ADX Filter (Capital saved)** |
+## Project Overview
+This repository contains a quantitative backtesting engine designed to evaluate the performance of moving-average crossover strategies on Infosys (INFY) historical price data. The framework incorporates transaction cost modeling and an ADX-based regime filter to study the trade-off between trend participation and downside risk management.
+
+Unlike many educational backtests, the framework incorporates **T+1 execution** and **transaction-cost modeling** to reduce unrealistic performance inflation and mitigate look-ahead bias.
+
+### Performance Summary
+The following metrics reflect a backtest conducted on 20 years of INFY data. Results are adjusted for a 10 basis point (0.1%) transaction friction penalty per trade.
+
+| Metric | 50/200-Day Gated | 100/200-Day MA | Buy & Hold |
+| :--- | :--- | :--- | :--- |
+| **CAGR (Annualized)** | 5.82% | 7.15% | 11.45% |
+| **Sharpe Ratio** | 0.03 | 0.08 | 0.25 |
+| **Max Drawdown** | -45.66% | -38.10% | -45.88% |
+| **Calmar Ratio** | 0.13 | 0.19 | 0.25 |
+| **Total Trades** | 19 | 12 | 0 |
+
+Results indicate that while the gated strategy reduced drawdown and trading frequency, long-term buy-and-hold delivered superior absolute returns and risk-adjusted performance over the sample period.
 
 ---
-
-## Market Regime Filter Analysis (ADX Intelligence)
-
-A core engineering upgrade to the engine is the integration of an **Average Directional Index (ADX) Market Regime Filter** ($ADX > 20$). Moving average crossover strategies inherently suffer severe capital erosion during sideways, consolidation phases due to "whipsawing" (rapidly entering and exiting failing trades).
-
-* **The Logic:** The system computes the True Range (TR) and Directional Movement Indices ($+DI / -DI$) using discrete-time Infinite Impulse Response (IIR) filtering techniques via MATLAB’s native `filter()` function. 
-* **The Impact:** The regime filter evaluated 34 potential structural crossovers. It successfully **blocked 15 entries** by identifying them as low-momentum, choppy consolidation phases. This structural gatekeeper preserved substantial capital by eliminating 30 individual friction events (entry/exit penalties) and minimizing absolute drawdowns in directionless macro regimes.
-
----
-
-## Multiple Timeframe Strategy Comparison
-
-To stress-test the robustness of the moving average framework under identical friction conditions, the engine cross-evaluated three separate timeframe variations alongside the primary benchmark.
-
-| Quantitative Strategy Type | Total Absolute Return | Systemic Alpha Evaluation |
-| :--- | :--- | :--- |
-| **20/50-Day Moving Average** | **48.39%** | Severe underperformance. Higher transaction frequency generated excessive transaction friction penalties, demonstrating how hyper-active trading destroys alpha under realistic brokerage settings. |
-| **50/200-Day Gated Strategy** | **94.60%** | Balanced mid-frequency engine. Significantly optimized by the ADX trend strength filter to maximize long-term trend retention while capping execution noise. |
-| **100/200-Day Moving Average** | **124.70%** | Maximum macro lag performance. Lower trade frequency naturally minimized friction penalties, though it surrendered short-term momentum shifts. |
-| **Passive Buy & Hold (Benchmark)** | **246.32%** | The structural benchmark. Proves that for a high-secular growth equity like INFY, a pure long-only technical lagging indicator underperforms absolute passive market exposure. |
+## Repository Structure
+```text
+├── main.m              # Main backtesting engine and analysis logic
+├── INFY.csv            # Historical equity dataset
+├── figures/            # Generated performance visualizations
+│   ├── INFY_Price_MA.png
+│   ├── INFY_Final_Equity.png
+│   ├── INFY_Drawdown.png
+│   └── INFY_Strategy_Comparison.png
+└── README.md           # Technical documentation and findings
